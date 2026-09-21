@@ -15,6 +15,7 @@ class MetadataSchemaBuilder:
     def __init__(self, client: httpx.AsyncClient):
         self.client = client
 
+    # add Error handling for the network calls
     # Fetches a list from the backend 
     async def _get(self, path: str) -> list:
         response = await self.client.get(f"{BACKEND_URL_FOR_FETCHING}{path}")

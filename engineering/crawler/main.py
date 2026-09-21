@@ -11,24 +11,29 @@ from utils.crawler_run_manager import CrawlerManager
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("scheduler")
 
+# since there is a config.py file which is deal with the environment variables can we move this load_env there and access all the variables from there to make the config.py the single source of truth?
 env_path = Path(__file__).resolve().parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
 SL_TZ = ZoneInfo("Asia/Colombo")
 
+# if someone wants to change the RUN TIME, cant do easily. better we take this as configuration if we goes with this setup.
 RUN_HOUR = 14
 RUN_MINUTE = 25
 RUN_INTERVAL_DAYS = 7
 
 
 async def crawl_job():
+    # DO NOT print secrets in the logs. 
     logger.info(f"API Key Loaded: {os.getenv('DEEPSEEK_API_KEY') is not None}")
     logger.info(f"\n--- Execution Started at {datetime.now(SL_TZ).strftime('%Y-%m-%d %H:%M:%S')} ---")
 
     try:
         manager = CrawlerManager()
+        # crawler_names parameter is missing in this function call.
         await manager.run_all_crawlers(concurrent=True)
     except Exception as e:
+        # BUG: this throws an error. use logger.error() or logger.info()
         logger(f"CRITICAL ERROR encountered during execution lifecycle: {e}")
 
     logger.info("--- Execution Complete ---")
@@ -43,6 +48,9 @@ def _next_run_time(now: datetime) -> datetime:
 
 async def main():
     logger.info("=== Automated Scheduler Started ===")
+    # cant we run this as a seperate kubernetes cronjob instead of handling the running time inside the application it self?
+    # What will happen if the server goes down? does it start crawling as soon as it re started?
+    # ex: if the crawler runs onece a week, why we keep the server running for extra 6 days to perform one time crawling? 
     logger.info(f"Runs every {RUN_INTERVAL_DAYS} days at {RUN_HOUR:02d}:{RUN_MINUTE:02d} (Asia/Colombo)")
 
     now = datetime.now(SL_TZ)
@@ -55,10 +63,13 @@ async def main():
         if seconds_to_wait > 0:
             logger.info(f"Next run scheduled for: {target_time.strftime('%Y-%m-%d %H:%M:%S %Z')}")
             logger.info(f"Sleeping for {round(seconds_to_wait / 3600, 2)} hours...")
+            # This method leads the crawler to sits idle consuming memory/resources for a long time.
             await asyncio.sleep(seconds_to_wait)
 
         await crawl_job()
-
+        
+        # for an example, if the crawler server crached after running it on Monday 14.25 PM, if the server started on Wednesday it again runs the crawler on Wednes 14.25 PM because there is no any record for last crawling datetime.
+        # This setup will work correctly on time if the server never goes down (we cant expect 100% uptime for the pods).
         target_time = target_time + timedelta(days=RUN_INTERVAL_DAYS)
         logger.info(f"Cycle complete. Next run in {RUN_INTERVAL_DAYS} days on: {target_time.strftime('%Y-%m-%d %H:%M:%S %Z')}")
 

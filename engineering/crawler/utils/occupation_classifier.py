@@ -3,6 +3,7 @@ import httpx
 import os
 from typing import Optional, List, Dict, Any
 
+# DEEPSEEK_API_KEY isnt used in the file
 from config import BACKEND_URL_FOR_FETCHING, DEEPSEEK_API_KEY
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
@@ -19,6 +20,7 @@ class OccupationClassifier:
     def __init__(self, client: httpx.AsyncClient):
         self.client = client
 
+    # handle the errors in the network call (try.. catch..)
     # Fetches a list from the backend
     async def _get(self, path: str) -> List[Dict[str, Any]]:
         response = await self.client.get(f"{BACKEND_URL_FOR_FETCHING}{path}")
@@ -54,6 +56,7 @@ class OccupationClassifier:
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.0,
         }
+        # Remove this commented line and access the API KEY from configs. Once you store all the values for the variables in the config.py access from there.
         # headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
         headers = {"Authorization": f'Bearer {os.getenv("DEEPSEEK_API_KEY")}'}
 

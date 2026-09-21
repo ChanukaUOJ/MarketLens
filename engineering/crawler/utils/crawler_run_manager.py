@@ -2,10 +2,13 @@ import logging
 import asyncio
 import httpx
 from datetime import datetime, timezone
+# Callable and Awaitable aren't using anywhere in the file
+# TODO: can uses python ruff package to check these lint and code formatting issues.
 from typing import Callable, Awaitable, Dict, List, Optional, Type
 
 from config import BACKEND_BASE_URL
 
+# can create __init__.py files inside the directories for module level imports
 from crawlers.base_crawler import BaseJobCrawler
 from crawlers.ikman_crawler import IkmanCrawler
 from crawlers.xpressjobs_crawler import XpresJobsCrawler
@@ -17,6 +20,7 @@ from utils.occupation_classifier import OccupationClassifier
 from utils.industry_classifier import IndustryClassifier
 from utils.thunder_id_client import ThunderIDClient
 
+# this basicConfig() is repeated here. Configure this only in the global/root level (main.py)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -25,6 +29,7 @@ class CrawlerManager:
     def __init__(self):
         self._registry: Dict[str, Type[BaseJobCrawler]] = {
             "rooster": RoosterCrawler,
+            # Spelling mistake for XpressJobsCrawler -> missing 's'
             "xpress": XpresJobsCrawler,
             "topjobs": TopJobsCrawler,
             "govermentjobs": GoverementJobsCrawler,
