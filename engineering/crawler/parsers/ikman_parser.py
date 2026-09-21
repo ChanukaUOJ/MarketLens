@@ -1,4 +1,5 @@
 import re
+# unused variables
 from datetime import datetime, timezone
 
 from parsers.base_parser import BaseJobParser

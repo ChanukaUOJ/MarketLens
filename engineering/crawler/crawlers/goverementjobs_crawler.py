@@ -195,9 +195,11 @@ class GoverementJobsCrawler(BaseJobCrawler):
                         extracted_job = llm_res[0]
 
                         job_text = f"{extracted_job.get('job_role', '')} {extracted_job.get('job_description', '')}"
+                        # cant we run these as concurrent calls?
                         occupation_group_id = await occupation_classifier.classify(job_text)
                         industry_subclass_id = await industry_classifier.classify(job_text)
 
+                        # cant we wrap this with a pydantic model? make sure to use the model in other places.
                         extracted_job["meta_data"]["crawler_run_id"] = crawler_run_id
                         extracted_job["meta_data"]["minhash_signature"] = minhash_sig
                         extracted_job["meta_data"]["occupation_group_id"] = occupation_group_id

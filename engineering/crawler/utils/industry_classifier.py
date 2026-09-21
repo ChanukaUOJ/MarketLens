@@ -8,6 +8,9 @@ from config import BACKEND_URL_FOR_FETCHING, DEEPSEEK_API_KEY
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 
 
+# NOTE:
+# currently most of the functions inside industry classifier and occupation classifier are identical. Instead of duplicate everything cant we create one base class and put the identical functions in the base class?
+# so the specific classifier classes can inherit from the base class and modify the specific functions inside.
 class IndustryClassifier:
     """
     Classifies a job into the industry hierarchy by walking down:
@@ -66,6 +69,7 @@ class IndustryClassifier:
 
     # Walks all 5 levels and returns the final industry_subclass_id (or None)
     async def classify(self, job_text: str) -> Optional[int]:
+        # currently these all _get requests are being call for each and every job posts. better we cache it and reused to improve performance.
         industry_sectors = await self._get("/industry-sectors")
         sector_id = await self._ask_llm_to_pick(job_text, industry_sectors, "Industry Sector")
         if not sector_id:

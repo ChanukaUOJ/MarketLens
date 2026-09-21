@@ -25,6 +25,7 @@ class XpresJobsCrawler(BaseJobCrawler):
     def __init__(self):
         self._parser = XpressJobsParser()
         self.duplication_checker = JobDuplicationCheck()
+        # this async_client creates new TCP connection inside the client and it needs to be closed correctly otherwise it keeps TCP connections open for a long time.
         self.async_client = httpx.AsyncClient(timeout=30.0)
         self._thunder_client = ThunderIDClient() 
 
@@ -37,6 +38,7 @@ class XpresJobsCrawler(BaseJobCrawler):
     async def _fetch_job_details(self, job_id):
         try:
             url = f"https://xpress.jobs/api/jobs/publishedJob?jobId={job_id}"
+            # better way is to used a shared async client here.
             response = await self.async_client.get(url)
             if response.status_code == 200:
                 data = response.json()

@@ -6,6 +6,7 @@ from typing import Optional, List, Dict, Any
 # DEEPSEEK_API_KEY isnt used in the file
 from config import BACKEND_URL_FOR_FETCHING, DEEPSEEK_API_KEY
 
+# Access this from the config. Since the user can use any LLM here better we use a generic name `LLM_API_URL`?
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 
 
@@ -69,6 +70,7 @@ class OccupationClassifier:
 
     # Walks all 5 levels and returns the final occupation_group_id (or None)
     async def classify(self, job_text: str) -> Optional[int]:
+        # currently these all _get requests are being call for each and every job posts. better we cache it and reused to improve performance.
         major_groups = await self._get("/major-groups")
         major_id = await self._ask_llm_to_pick(job_text, major_groups, "Major Group")
         if not major_id:
