@@ -69,6 +69,7 @@ class IkmanCrawler(BaseJobCrawler):
 
         count = 1
         max_pages = await self._get_last_page_from_text()
+        # remove unnecessary comments
         #max_pages = 1
 
         new_jobs_buffer: List[Dict[str, Any]] = []

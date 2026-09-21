@@ -104,12 +104,14 @@ class IkmanParser(BaseJobParser):
                 location = dash.group(1).strip()
 
         location      = location or "Sri Lanka"
+        # is_remote is not used anywhere in the file
         is_remote     = bool(re.search(r"\bremote\b|\bwork from home\b|\bwfh\b", markdown, re.IGNORECASE))
 
         description = self._extract_description(markdown)
         description = self._clean_noise(description)
 
-        return {
+        # instead of parsing this as a dict can we wrap this with a pydantic model and parse for the type safe?
+        return {    
             "employer":             employer,
             "job_role":             job_role,
             "location":             location,

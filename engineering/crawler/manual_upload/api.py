@@ -19,6 +19,10 @@ from manual_upload.models import JobInput
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("manual-upload")
 
+# This is a complete FastAPI backend service sits inside the crawler. To make this endpoint available for the MCP server,
+# the crawler service needs to be running always which is unnecessary. Can we move the deduplication part to the main backend instead of keeping it in the crawler side? 
+# then we can remove this small FastAPI backend inside the crawler. Crawler's job should be crawl the data from the sources given and move to the backend service. NOT RUNNING different backend service inside
+# By this we can reduce the unnecessary API calls crawler --> backend and vice versa. 
 app = FastAPI()
 
 @app.post("/manual-upload-jobs")

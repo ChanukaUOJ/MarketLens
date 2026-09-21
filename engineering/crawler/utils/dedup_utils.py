@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 class JobDuplicationCheck:
 
+    # comment fix --> for a given job
     #This function generates the minhash and lsh keys for a give job
     def generate_production_minhash_and_lsh(
         self, job_data: dict, num_perm: int = 128, num_bands: int = 8

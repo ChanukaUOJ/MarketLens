@@ -1,3 +1,5 @@
+# Why this is used inside only the research folder? not in the crawler?
+
 JOB_EXTRACTION_SCHEMA = {
     "type": "object",
     "properties": {

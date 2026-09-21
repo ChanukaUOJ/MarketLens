@@ -138,24 +138,28 @@ class GoverementJobsCrawler(BaseJobCrawler):
         
         job_data_list = await self._fetch_job_details()
 
+        # The below part is duplicated across the other crawlers. Can we move this post processing to some other centralized pipeline?
         new_jobs_buffer: List[Dict[str, Any]] = []
         lsh_index_buffer: List[Dict[str, Any]] = []
         updated_jobs_buffer: List[Dict[str, Any]] = []
 
         detail_extraction_strategy = LLMExtractionStrategy(
             llm_config=LLMConfig(
+                # Access hard coded values from configs
                 provider="deepseek/deepseek-chat",
+                # Access variables from configs
                 api_token=os.getenv("DEEPSEEK_API_KEY"),
             ),
             instruction=instruction,
             schema=json.dumps(schema),
             extraction_type="schema", 
             apply_chunking=False,          
+            # access these hard coded values from configs
             extra_args={"base_url": "https://api.deepseek.com", "temperature": 0.0},
         )
 
         for result in job_data_list:
-
+            
             temp_payload = self._parser.parse_rule_based_fields(result)
 
             raw_text = json.dumps(result)
