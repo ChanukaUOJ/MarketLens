@@ -38,6 +38,7 @@ class TopJobsCrawler(BaseJobCrawler):
     def __init__(self):
         self._parser = TopJobsParser()
         self.duplication_checker = JobDuplicationCheck()
+        # By creating a singleton for this thunder client we can reused it across the crawler
         self._thunder_client = ThunderIDClient() 
 
     async def _get_total_pages(self, html: str) -> int:
@@ -80,6 +81,7 @@ class TopJobsCrawler(BaseJobCrawler):
 
             await page.goto(f"{LISTING_URL}&pageNo=1", wait_until="networkidle")
             total_pages = await self._get_total_pages(await page.content())
+            # remove this comments
             #total_pages = 1
             logger.info(f"Total pages detected: {total_pages}")
 
@@ -87,6 +89,7 @@ class TopJobsCrawler(BaseJobCrawler):
             all_jobs = []
             
             for page_num in range(1, total_pages + 1):
+                # remove this comments
                 # log.info("Navigating to listings...")
                 # await page.goto(LISTING_URL, wait_until="networkidle")
 
@@ -100,6 +103,7 @@ class TopJobsCrawler(BaseJobCrawler):
 
                 for i, job in enumerate(jobs):
 
+                    # 30 is hard coded here
                     if len(all_jobs) >= 30:
                         logger.info(f"Reached job limit for this page — stopping.")
                         break
@@ -153,9 +157,11 @@ class TopJobsCrawler(BaseJobCrawler):
 
             await browser.close()
             
+            # removed these comments
             # with open("vacancies.json", "w", encoding="utf-8") as f:
             #     json.dump(jobs, f, ensure_ascii=False, indent=2)
             #print(all_jobs)
+            # what is this vacancies.json?
             logger.info("Done! Data saved to vacancies.json")
             return all_jobs
 
@@ -186,6 +192,7 @@ class TopJobsCrawler(BaseJobCrawler):
         lsh_index_buffer: List[Dict[str, Any]] = []
         updated_jobs_buffer: List[Dict[str, Any]] = []
 
+         # this is duplicated across all crawlers
         detail_extraction_strategy = LLMExtractionStrategy(
             llm_config=LLMConfig(
                 provider="deepseek/deepseek-chat",

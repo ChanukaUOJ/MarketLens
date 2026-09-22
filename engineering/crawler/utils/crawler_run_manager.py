@@ -43,20 +43,25 @@ class CrawlerManager:
         start_payload = {
             "started_at": current_time_iso,
             "finished_at": None,
+            # What are the other status values can be assigned for this "status" key? Better access these values through enums
             "status": "RUNNING",
         }
         try:
             token = await self._thunder_client.get_access_token()  
             init_res = await client.post(f"{BACKEND_BASE_URL}/runs", json=start_payload, headers={"Authorization": f"Bearer {token}"}, )
+            # defaulting the crawler_run_id to 1 is dangerous because this leads the crawler to run hours and tag the jobs with the run id 1.
+            # if the crawler couldn't create a crawl session the crawler should abort instead of defaulting it to 1.
             crawler_run_id = init_res.json().get("id", 1)
             logger.info(f"Initialized Tracking Session Run ID: {crawler_run_id}")
             return crawler_run_id
         except Exception as e:
             logger.warning(f"Could not connect to tracking backend. Defaulting fallback to run sequence ID 1: {e}")
+            # raise the exception here instead of defaulting it to 1.
             return 1
 
     #This function sets the status of the current crawling session to "COMPLETED" 
     #and sets the end date of the jobs that are not equal to current crawler run id
+    # comment: what will happen if we run only a specific crawler? does this 
     async def _finalize_run(self, client: httpx.AsyncClient, crawler_run_id: int) -> None:
         try:
             logger.info("Executing pipeline reconciliation. Retiring dead listings from active pool.")
@@ -105,6 +110,10 @@ class CrawlerManager:
     #This function calls the all crawlers one by one and send it to _run_crawler function
     async def run_all_crawlers(
         self,
+        # currently even the crawler_name is taken from here. Since this is not injected to function where its being used, this defaults to the existing crawler registry and run.
+        # but if we give an option to run the specific crawlers there should be a way to store the crawler name in the db and do the _finalize_run()
+        # as the result it would accidentally deactivate all active jobs from the other crawlers.
+        # TODO: can enable this capability later
         crawler_names: Optional[List[str]] = None,
         concurrent: bool = False
     ) -> None:

@@ -28,6 +28,7 @@ class IkmanCrawler(BaseJobCrawler):
     def __init__(self):
         self.parser = IkmanParser()
         self.duplication_checker = JobDuplicationCheck()
+        # By creating a singleton for this thunder client we can reused it across the crawler
         self._thunder_client = ThunderIDClient() 
 
     #This function returns the last page number from the site
@@ -89,6 +90,7 @@ class IkmanCrawler(BaseJobCrawler):
         async with AsyncWebCrawler(config=browser_config) as crawler:
             all_detail_urls = []
 
+            # cant we run this API call concurrently? Currently this is sequential
             for page in range(1, max_pages + 1):
                 url = f"https://ikman.lk/en/ads/sri-lanka/jobs?page={page}"
                 logger.info(f"Scanning Listing Page Index: {page}")
@@ -115,6 +117,8 @@ class IkmanCrawler(BaseJobCrawler):
 
                 temp_payload = self.parser.parse_rule_based_fields(markdown=result.markdown.raw_markdown)
 
+
+                # this is dedundant across all the crawler files. Why cant we move this to the backend layer since this handle multiple API calls from crawler to backend and vice versa.
                 minhash_sig, lsh_indexes = self.duplication_checker.generate_production_minhash_and_lsh(temp_payload)
                 is_duplicate, matched_id = await self.duplication_checker.check_duplicate_via_backend(
                     async_client,
@@ -137,6 +141,8 @@ class IkmanCrawler(BaseJobCrawler):
                         updated_jobs_buffer.clear()
                 else:
                     logger.info(f"Unique entry found. Calling LLM to parse entire schema: {result.url}")
+                    # this is already done by line 108 right? this leads to run the crawler4ai twice in the same data.
+                    # cant we use the data got from line 108? cant we access this through result.markdown.faw_markdown
                     llm_res = await crawler.arun(
                         url=result.url,
                         config=CrawlerRunConfig(extraction_strategy=llm_extraction_strategy, cache_mode="BYPASS"),

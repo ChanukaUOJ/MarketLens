@@ -36,6 +36,7 @@ class GoverementJobsCrawler(BaseJobCrawler):
         self._parser = GoverementJobsParser()
         self.duplication_checker = JobDuplicationCheck()
         self.async_client = httpx.AsyncClient()
+        # By creating a singleton for this thunder client we can reused it across the crawler
         self._thunder_client = ThunderIDClient() 
 
     def _remove_sinhala_control_chars(self, text):
@@ -62,11 +63,14 @@ class GoverementJobsCrawler(BaseJobCrawler):
 
             pagination_text = soup.select_one('.category-results .paginate').text
             total_pages = int(pagination_text.split()[-1])
+
+            # remove the print. put loggers only for the required logs
             #total_pages = 1
             print(total_pages)
             
             for page_num in range(1, total_pages + 1):
                 current_url = base_url.format(page_num)
+                # remove print
                 print(f"Crawling: {current_url}")
                 
                 # Fetch the specific page
@@ -88,6 +92,8 @@ class GoverementJobsCrawler(BaseJobCrawler):
                         img_res = await crawler.arun(url=full_image_page_url)
                         img_soup = BeautifulSoup(img_res.html, 'html.parser')
                         # img_tag = img_soup.select_one('.page-content img')
+
+                        # remove unnecessary comments
                         
                         # description = ""
                         # if img_tag and 'src' in img_tag.attrs:
@@ -111,6 +117,7 @@ class GoverementJobsCrawler(BaseJobCrawler):
                         })
                         
                     except Exception as e:
+                        # user logger.error()
                         print(f"Error parsing job: {e}")
                         continue
                 
@@ -185,6 +192,7 @@ class GoverementJobsCrawler(BaseJobCrawler):
                     await async_client.post(f"{BACKEND_BASE_URL}/jobs/batch-update", json={"duplicates": updated_jobs_buffer}, headers=auth_headers,)
                     updated_jobs_buffer.clear()
             else:
+                # remove unnecessary loggers or make it more clear
                 logger.info(f"Unique entry found. Calling LLM to parse entire schema")
                 llm_res = await asyncio.to_thread(
                     detail_extraction_strategy.run, url="", sections=[raw_text]

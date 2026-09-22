@@ -9,4 +9,5 @@ THUNDER_BASE_URL = os.getenv("THUNDER_BASE_URL")
 THUNDER_CLIENT_ID = os.getenv("THUNDER_CLIENT_ID")
 THUNDER_CLIENT_SECRET = os.getenv("THUNDER_CLIENT_SECRET")
 THUNDER_RESOURCE = os.getenv("THUNDER_RESOURCE")
+# there is no any fallback value for this which leads to an error when try to perform .lower() on a None value
 THUNDER_VERIFY_TLS = os.getenv("THUNDER_INSECURE_TLS").lower() != "true"

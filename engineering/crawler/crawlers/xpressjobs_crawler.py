@@ -1,3 +1,5 @@
+# remove the unused imports
+
 import asyncio
 import requests
 import httpx
@@ -27,6 +29,7 @@ class XpresJobsCrawler(BaseJobCrawler):
         self.duplication_checker = JobDuplicationCheck()
         # this async_client creates new TCP connection inside the client and it needs to be closed correctly otherwise it keeps TCP connections open for a long time.
         self.async_client = httpx.AsyncClient(timeout=30.0)
+        # By creating a singleton for this thunder client we can reused it across the crawler
         self._thunder_client = ThunderIDClient() 
 
     def _clean_html(self, html_content):
@@ -123,6 +126,7 @@ class XpresJobsCrawler(BaseJobCrawler):
         lsh_index_buffer: List[Dict[str, Any]] = []
         updated_jobs_buffer: List[Dict[str, Any]] = []
 
+        # this is duplicated
         detail_extraction_strategy = LLMExtractionStrategy(
             llm_config=LLMConfig(
                 provider="deepseek/deepseek-chat",

@@ -2,7 +2,6 @@ import httpx
 
 from config import BACKEND_URL_FOR_FETCHING
 
-
 class MetadataSchemaBuilder:
     """
     Fetches formality, gender, vocational_education, employment_sector,
@@ -15,6 +14,7 @@ class MetadataSchemaBuilder:
     def __init__(self, client: httpx.AsyncClient):
         self.client = client
 
+    # this function is duplicated across schema_builder.py, occupation_classifier.py, industry_classifier.py
     # add Error handling for the network calls
     # Fetches a list from the backend 
     async def _get(self, path: str) -> list:
@@ -32,6 +32,7 @@ class MetadataSchemaBuilder:
         return "\n".join(lines)
 
     async def build(self):
+        # These network calls are sequential. cant we make all these concurrent?
         formalities = await self._get("/formalities")
         genders = await self._get("/genders")
         vocational_educations = await self._get("/vocational-educations")

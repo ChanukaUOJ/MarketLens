@@ -22,8 +22,10 @@ class RoosterCrawler(BaseJobCrawler):
     def __init__(self):
         self._parser = RoosterParser()
         self.duplication_checker = JobDuplicationCheck()
+        # By creating a singleton for this thunder client we can reused it across the crawler
         self._thunder_client = ThunderIDClient() 
 
+    # There is no error handling for this network call
     async def _fetch_all_jobs(self, async_client: httpx.AsyncClient):
         base_url = "https://api.rooster.jobs/jobSearch/jobs/search"
         limit = 20
@@ -32,17 +34,25 @@ class RoosterCrawler(BaseJobCrawler):
         # Initial call to get total count
         payload = {"query": [], "limit": limit, "page": 1, "filters": {"country": "Sri Lanka"}}
         response = (await async_client.post(base_url, json=payload)).json()
+        # unsafe to access the keys from respose because if the requests returns 429, 500 etc, the result wont be in the required shape.
         total_jobs = response['body']['count']
         total_pages = math.ceil(total_jobs / limit)
+        # remove unnecessary commented line
         #total_pages = 1
         
         logger.info(f"Total jobs to fetch: {total_jobs} over {total_pages} pages.")
 
+        # instead of going one by one can we use semaphore concept to trigger a group of requests concurrency? (ex: 5 requests at once)
+        # by this way we can improve the performance
+        # use response.raise_for_status() after the API call
         for page in range(1, total_pages + 1):
+            # user logger instead of the print
             print(f"Fetching page {page}...")
             payload['page'] = page
+            # there is no error handling over the network close
             response = (await async_client.post(base_url, json=payload)).json()
 
+            # unsafe to access the keys from respose because if the requests returns 429, 500 etc, the result wont be in the required shape.
             for job in response['body']['data']:
                 all_jobs.append(job)
                 
@@ -76,6 +86,7 @@ class RoosterCrawler(BaseJobCrawler):
         lsh_index_buffer: List[Dict[str, Any]] = []
         updated_jobs_buffer: List[Dict[str, Any]] = []
 
+         # this is duplicated crawlers
         detail_extraction_strategy = LLMExtractionStrategy(
             llm_config=LLMConfig(
                 provider="deepseek/deepseek-chat",

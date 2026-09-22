@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class ThunderIDClient:
 
     # by caching the access token in memory will improve the performance. otherwise everytime get access token is called, another network call will be introduced even we have the valid access token.
-    # there is no any error handling inside this network call which leads to crash the server in the 'access_token' isnt in the response.
+    # there is no any error handling inside this network call which leads to crash the server if the 'access_token' isnt exsits in the response.
     async def get_access_token(self):
         async with httpx.AsyncClient(verify=THUNDER_VERIFY_TLS) as client:
             response = await client.post(
