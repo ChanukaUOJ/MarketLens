@@ -15,7 +15,7 @@ class MetadataSchemaBuilder:
     def __init__(self, client: httpx.AsyncClient):
         self.client = client
 
-    # Fetches a list from the backend 
+    # Fetches a list from the backend
     async def _get(self, path: str) -> list:
         response = await self.client.get(f"{BACKEND_URL_FOR_FETCHING}{path}")
         response.raise_for_status()
@@ -25,7 +25,7 @@ class MetadataSchemaBuilder:
                 return value
         return []
 
-    # Turns a list 
+    # Turns a list
     def _format_options(self, items: list, label_field: str) -> str:
         lines = [f"{item['id']}: {item[label_field]}" for item in items]
         return "\n".join(lines)
@@ -40,7 +40,9 @@ class MetadataSchemaBuilder:
 
         formality_options = self._format_options(formalities, "formality_type")
         gender_options = self._format_options(genders, "gender_type")
-        vocational_education_options = self._format_options(vocational_educations, "level")
+        vocational_education_options = self._format_options(
+            vocational_educations, "level"
+        )
         employment_sector_options = self._format_options(employment_sectors, "sector")
         education_level_options = self._format_options(education_levels, "level")
         experience_options = self._format_options(experiences, "name")
@@ -97,9 +99,17 @@ class MetadataSchemaBuilder:
                         "experience_id": {"type": "integer"},
                     },
                     "required": [
-                        "geo_data", "source", "ai_version", "posted_at", "confidence_score",
-                        "formality_id", "gender_id", "vocational_education_id",
-                        "employment_sector_id", "education_level_id", "experience_id", 
+                        "geo_data",
+                        "source",
+                        "ai_version",
+                        "posted_at",
+                        "confidence_score",
+                        "formality_id",
+                        "gender_id",
+                        "vocational_education_id",
+                        "employment_sector_id",
+                        "education_level_id",
+                        "experience_id",
                     ],
                 },
                 "skills": {
@@ -112,8 +122,15 @@ class MetadataSchemaBuilder:
                 },
             },
             "required": [
-                "employer", "job_role", "job_type", "job_description",
-                "location", "work_mode", "no_of_vacancies", "meta_data", "skills",
+                "employer",
+                "job_role",
+                "job_type",
+                "job_description",
+                "location",
+                "work_mode",
+                "no_of_vacancies",
+                "meta_data",
+                "skills",
             ],
         }
 

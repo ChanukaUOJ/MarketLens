@@ -3,7 +3,7 @@ import httpx
 import os
 from typing import Optional, List, Dict, Any
 
-from config import BACKEND_URL_FOR_FETCHING, DEEPSEEK_API_KEY
+from config import BACKEND_URL_FOR_FETCHING
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 
@@ -30,7 +30,9 @@ class OccupationClassifier:
         return []
 
     # Asks the LLM to pick one id from a list of options
-    async def _ask_llm_to_pick(self, job_text: str, options: List[Dict[str, Any]], level_name: str) -> Optional[int]:
+    async def _ask_llm_to_pick(
+        self, job_text: str, options: List[Dict[str, Any]], level_name: str
+    ) -> Optional[int]:
         if not options:
             return None
 
@@ -55,9 +57,11 @@ class OccupationClassifier:
             "temperature": 0.0,
         }
         # headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
-        headers = {"Authorization": f'Bearer {os.getenv("DEEPSEEK_API_KEY")}'}
+        headers = {"Authorization": f"Bearer {os.getenv('DEEPSEEK_API_KEY')}"}
 
-        response = await self.client.post(DEEPSEEK_API_URL, json=payload, headers=headers)
+        response = await self.client.post(
+            DEEPSEEK_API_URL, json=payload, headers=headers
+        )
         response.raise_for_status()
 
         content = response.json()["choices"][0]["message"]["content"]
@@ -72,7 +76,9 @@ class OccupationClassifier:
             return None
 
         sub_major_groups = await self._get(f"/major-groups/{major_id}/sub-major-groups")
-        sub_major_id = await self._ask_llm_to_pick(job_text, sub_major_groups, "Sub Major Group")
+        sub_major_id = await self._ask_llm_to_pick(
+            job_text, sub_major_groups, "Sub Major Group"
+        )
         if not sub_major_id:
             return None
 
@@ -87,5 +93,7 @@ class OccupationClassifier:
             return None
 
         occupation_groups = await self._get(f"/unit-groups/{unit_id}/occupation-groups")
-        occupation_group_id = await self._ask_llm_to_pick(job_text, occupation_groups, "Occupation Group")
+        occupation_group_id = await self._ask_llm_to_pick(
+            job_text, occupation_groups, "Occupation Group"
+        )
         return occupation_group_id

@@ -3,7 +3,7 @@ import httpx
 import os
 from typing import Optional, List, Dict, Any
 
-from config import BACKEND_URL_FOR_FETCHING, DEEPSEEK_API_KEY
+from config import BACKEND_URL_FOR_FETCHING
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 
@@ -19,7 +19,7 @@ class IndustryClassifier:
     def __init__(self, client: httpx.AsyncClient):
         self.client = client
 
-    # Fetches a list from the backend 
+    # Fetches a list from the backend
     async def _get(self, path: str) -> List[Dict[str, Any]]:
         response = await self.client.get(f"{BACKEND_URL_FOR_FETCHING}{path}")
         response.raise_for_status()
@@ -30,7 +30,9 @@ class IndustryClassifier:
         return []
 
     # Asks the LLM to pick one id from a list of options
-    async def _ask_llm_to_pick(self, job_text: str, options: List[Dict[str, Any]], level_name: str) -> Optional[int]:
+    async def _ask_llm_to_pick(
+        self, job_text: str, options: List[Dict[str, Any]], level_name: str
+    ) -> Optional[int]:
         if not options:
             return None
 
@@ -55,9 +57,11 @@ class IndustryClassifier:
             "temperature": 0.0,
         }
         # headers = {"Authorization": f"Bearer {DEEPSEEK_API_KEY}"}
-        headers = {"Authorization": f'Bearer {os.getenv("DEEPSEEK_API_KEY")}'}
+        headers = {"Authorization": f"Bearer {os.getenv('DEEPSEEK_API_KEY')}"}
 
-        response = await self.client.post(DEEPSEEK_API_URL, json=payload, headers=headers)
+        response = await self.client.post(
+            DEEPSEEK_API_URL, json=payload, headers=headers
+        )
         response.raise_for_status()
 
         content = response.json()["choices"][0]["message"]["content"]
@@ -67,25 +71,43 @@ class IndustryClassifier:
     # Walks all 5 levels and returns the final industry_subclass_id (or None)
     async def classify(self, job_text: str) -> Optional[int]:
         industry_sectors = await self._get("/industry-sectors")
-        sector_id = await self._ask_llm_to_pick(job_text, industry_sectors, "Industry Sector")
+        sector_id = await self._ask_llm_to_pick(
+            job_text, industry_sectors, "Industry Sector"
+        )
         if not sector_id:
             return None
 
-        industry_divisions = await self._get(f"/industry-sectors/{sector_id}/industry-divisions")
-        division_id = await self._ask_llm_to_pick(job_text, industry_divisions, "Industry Division")
+        industry_divisions = await self._get(
+            f"/industry-sectors/{sector_id}/industry-divisions"
+        )
+        division_id = await self._ask_llm_to_pick(
+            job_text, industry_divisions, "Industry Division"
+        )
         if not division_id:
             return None
 
-        industry_groups = await self._get(f"/industry-divisions/{division_id}/industry-groups")
-        group_id = await self._ask_llm_to_pick(job_text, industry_groups, "Industry Group")
+        industry_groups = await self._get(
+            f"/industry-divisions/{division_id}/industry-groups"
+        )
+        group_id = await self._ask_llm_to_pick(
+            job_text, industry_groups, "Industry Group"
+        )
         if not group_id:
             return None
 
-        industry_classes = await self._get(f"/industry-groups/{group_id}/industry-classes")
-        class_id = await self._ask_llm_to_pick(job_text, industry_classes, "Industry Class")
+        industry_classes = await self._get(
+            f"/industry-groups/{group_id}/industry-classes"
+        )
+        class_id = await self._ask_llm_to_pick(
+            job_text, industry_classes, "Industry Class"
+        )
         if not class_id:
             return None
 
-        industry_subclasses = await self._get(f"/industry-classes/{class_id}/industry-subclasses")
-        subclass_id = await self._ask_llm_to_pick(job_text, industry_subclasses, "Industry Subclass")
+        industry_subclasses = await self._get(
+            f"/industry-classes/{class_id}/industry-subclasses"
+        )
+        subclass_id = await self._ask_llm_to_pick(
+            job_text, industry_subclasses, "Industry Subclass"
+        )
         return subclass_id

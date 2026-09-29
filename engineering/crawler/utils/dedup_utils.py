@@ -7,9 +7,9 @@ from datasketch import MinHash
 
 logger = logging.getLogger(__name__)
 
-class JobDuplicationCheck:
 
-    #This function generates the minhash and lsh keys for a give job
+class JobDuplicationCheck:
+    # This function generates the minhash and lsh keys for a give job
     def generate_production_minhash_and_lsh(
         self, job_data: dict, num_perm: int = 128, num_bands: int = 8
     ) -> Tuple[List[int], List[Dict[str, Any]]]:
@@ -17,11 +17,13 @@ class JobDuplicationCheck:
         text_content = " ".join(text_content.lower().split())
 
         k = 3
-        shingles = set(text_content[i:i + k] for i in range(len(text_content) - k + 1))
+        shingles = set(
+            text_content[i : i + k] for i in range(len(text_content) - k + 1)
+        )
 
         m = MinHash(num_perm=num_perm)
         for shingle in shingles:
-            m.update(shingle.encode('utf-8'))
+            m.update(shingle.encode("utf-8"))
 
         raw_signature = [int(h) for h in m.hashvalues]
         lsh_indexes = []
@@ -36,17 +38,14 @@ class JobDuplicationCheck:
             hasher.update(band_hashes.tobytes())
             bucket_key = f"b{band_no}_{hasher.hexdigest()[:16]}"
 
-            lsh_indexes.append({
-                "band_no": band_no,
-                "bucket_key": bucket_key
-            })
+            lsh_indexes.append({"band_no": band_no, "bucket_key": bucket_key})
 
         return raw_signature, lsh_indexes
 
-    #This function checks if two location strings are semantically compatible
+    # This function checks if two location strings are semantically compatible
     def _locations_compatible(self, loc_a: str, loc_b: str) -> bool:
         if not loc_a or not loc_b:
-            return True 
+            return True
 
         if loc_a == loc_b:
             return True
@@ -59,7 +58,7 @@ class JobDuplicationCheck:
         words_b = set(loc_b.split()) - stopwords
         return bool(words_a & words_b)
 
-    #This function checks the similarity with the saved jobs in the database and return similar job id
+    # This function checks the similarity with the saved jobs in the database and return similar job id
     async def check_duplicate_via_backend(
         self,
         client: httpx.AsyncClient,
@@ -70,14 +69,20 @@ class JobDuplicationCheck:
         incoming_location: str = "",
         jaccard_threshold: float = 0.65,
     ) -> Tuple[bool, Any]:
-        
+
         try:
             flat_bucket_keys = [item["bucket_key"] for item in lsh_indexes]
             request_payload = {"bucket_keys": flat_bucket_keys}
 
-            response = await client.post(f"{backend_base_url}/radar/lookup", json=request_payload, headers=auth_headers,)
+            response = await client.post(
+                f"{backend_base_url}/radar/lookup",
+                json=request_payload,
+                headers=auth_headers,
+            )
             if response.status_code != 200:
-                logger.warning(f"Lookup server returned unexpected status code: {response.status_code}")
+                logger.warning(
+                    f"Lookup server returned unexpected status code: {response.status_code}"
+                )
                 return False, None
 
             similar_jobs = response.json()
@@ -89,7 +94,9 @@ class JobDuplicationCheck:
                 inc_location = incoming_location.strip().lower()
 
                 if not self._locations_compatible(db_location, inc_location):
-                    logger.info(f"Skipping Job ID {job.get('id')}: location mismatch ('{inc_location}' vs '{db_location}')")
+                    logger.info(
+                        f"Skipping Job ID {job.get('id')}: location mismatch ('{inc_location}' vs '{db_location}')"
+                    )
                     continue
 
                 meta = job.get("meta_data") or {}
@@ -104,7 +111,9 @@ class JobDuplicationCheck:
 
                 if jaccard_value >= jaccard_threshold:
                     matched_job_post_id = job.get("id")
-                    logger.info(f"Collision detected! Jaccard score: {round(jaccard_value, 2)} against Job ID: {matched_job_post_id}")
+                    logger.info(
+                        f"Collision detected! Jaccard score: {round(jaccard_value, 2)} against Job ID: {matched_job_post_id}"
+                    )
                     return True, matched_job_post_id
 
         except Exception as e:

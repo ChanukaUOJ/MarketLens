@@ -4,7 +4,9 @@ import sys
 
 from utils.crawler_run_manager import CrawlerManager
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -14,12 +16,12 @@ async def crawl_job():
     try:
         manager = CrawlerManager()
         await manager.run_all_crawlers(concurrent=True)
-    except Exception as e:
+    except Exception:
         logger.exception("CRITICAL ERROR encountered during execution lifecycle")
         sys.exit(1)
-        
 
     logger.info("--- Crawling Completed ---")
+
 
 if __name__ == "__main__":
     try:

@@ -6,7 +6,6 @@ from utils.industry_classifier import IndustryClassifier
 
 
 class BaseJobCrawler(ABC):
-
     @abstractmethod
     async def crawl_jobs(
         self,
