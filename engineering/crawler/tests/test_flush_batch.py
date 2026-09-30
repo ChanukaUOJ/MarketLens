@@ -7,6 +7,7 @@ import pytest
 from crawlers.base_crawler import MAX_RETRIES, RETRYABLE_STATUS_CODES
 from models.raw_job import RawJobInput
 
+
 def make_job(job_id: str = "job-1", crawler_run_id: int = 1) -> RawJobInput:
     return RawJobInput(
         job_id=job_id,
@@ -59,8 +60,8 @@ def failure(job_id: str, status_code: int = 503, error: str = "error"):
 # All jobs saved successfully — single attempt, no retries needed
 # ---------------------------------------------------------------------------
 
-class TestAllSucceeded:
 
+class TestAllSucceeded:
     @pytest.mark.asyncio
     async def test_empty_failed_jobs_list_clears_batch_in_one_call(
         self, crawler, auth_headers
@@ -105,15 +106,16 @@ class TestAllSucceeded:
         _, kwargs = client.post.call_args
         assert kwargs["headers"] == auth_headers
         sent_payload = kwargs["json"][0]
-        assert isinstance(RawJobInput.model_validate(sent_payload),RawJobInput) == True 
+        assert isinstance(RawJobInput.model_validate(sent_payload), RawJobInput)
         assert sent_payload["job_id"] == "a"
+
 
 # ---------------------------------------------------------------------------
 # Internal retries: a failure on attempt N is retried within the SAME call
 # ---------------------------------------------------------------------------
 
-class TestInternalRetrySucceeds:
 
+class TestInternalRetrySucceeds:
     @pytest.mark.asyncio
     async def test_retryable_failure_recovers_on_second_attempt(
         self, crawler, auth_headers
@@ -146,9 +148,9 @@ class TestInternalRetrySucceeds:
         job_batch = list(jobs)
         client = AsyncMock()
         client.post.side_effect = [
-            make_ok_response([failure(f"job-{i}") for i in range(5)]),   # 10 -> 5 fail
-            make_ok_response([failure(f"job-{i}") for i in range(3)]),   # 5 -> 3 fail
-            make_ok_response([]),                                        # 3 -> all succeed
+            make_ok_response([failure(f"job-{i}") for i in range(5)]),  # 10 -> 5 fail
+            make_ok_response([failure(f"job-{i}") for i in range(3)]),  # 5 -> 3 fail
+            make_ok_response([]),  # 3 -> all succeed
         ]
 
         await crawler._flush_batch(client, auth_headers, job_batch)
@@ -190,8 +192,8 @@ class TestInternalRetrySucceeds:
 # Non-retryable failures: dropped immediately, no extra attempts spent
 # ---------------------------------------------------------------------------
 
-class TestNonRetryableFailures:
 
+class TestNonRetryableFailures:
     @pytest.mark.asyncio
     async def test_non_retryable_failure_dropped_without_retrying(
         self, crawler, auth_headers
@@ -287,7 +289,9 @@ class TestNonRetryableFailures:
         assert job_batch == []
 
     @pytest.mark.asyncio
-    async def test_408_request_timeout_is_treated_as_retryable(self, crawler, auth_headers):
+    async def test_408_request_timeout_is_treated_as_retryable(
+        self, crawler, auth_headers
+    ):
         """408 is in RETRYABLE_STATUS_CODES — a job failing because the
         request timed out server-side should get another chance rather
         than being dropped."""
@@ -308,8 +312,8 @@ class TestNonRetryableFailures:
 # Retry exhaustion (poison-pill protection) — all within one call now
 # ---------------------------------------------------------------------------
 
-class TestRetryExhaustion:
 
+class TestRetryExhaustion:
     @pytest.mark.asyncio
     async def test_job_dropped_after_max_retries_and_batch_still_clears(
         self, crawler, auth_headers
@@ -357,8 +361,8 @@ class TestRetryExhaustion:
 # Transport-level failures (no usable response at all)
 # ---------------------------------------------------------------------------
 
-class TestTransportFailures:
 
+class TestTransportFailures:
     @pytest.mark.asyncio
     async def test_timeout_is_retried_internally_then_dropped(
         self, crawler, auth_headers

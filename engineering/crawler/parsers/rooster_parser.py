@@ -1,8 +1,8 @@
 from parsers.base_parser import BaseJobParser
 from models.raw_job import RawJobInput
 
-class RoosterParser(BaseJobParser):
 
+class RoosterParser(BaseJobParser):
     def parse_rule_based_fields(self, job: dict, crawler_run_id: int) -> RawJobInput:
         return RawJobInput(
             employer=job.get("company_name") or "",

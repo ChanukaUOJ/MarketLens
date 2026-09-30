@@ -1,6 +1,7 @@
 import pytest
- 
+
 from crawlers.base_crawler import BaseJobCrawler
+
 
 class _ConcreteCrawler(BaseJobCrawler):
     """BaseJobCrawler is abstract; _flush_batch is what we're testing and

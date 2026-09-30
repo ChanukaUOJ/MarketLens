@@ -14,7 +14,6 @@ RETRYABLE_STATUS_CODES = {500, 502, 503, 504, 429, 408}
 
 
 class BaseJobCrawler(ABC):
-
     @abstractmethod
     async def crawl_jobs(
         self,
@@ -24,10 +23,10 @@ class BaseJobCrawler(ABC):
         pass
 
     async def _flush_batch(
-    self,
-    async_client: httpx.AsyncClient,
-    auth_headers: dict,
-    job_batch: List[RawJobInput],
+        self,
+        async_client: httpx.AsyncClient,
+        auth_headers: dict,
+        job_batch: List[RawJobInput],
     ) -> None:
 
         try:
@@ -51,17 +50,17 @@ class BaseJobCrawler(ABC):
                         for f in body.get("failed_jobs", [])
                         if "job_id" in f
                     }
-    
+
                     if not failed_jobs:
                         pending = []
                         break
-    
+
                     next_pending = []
                     for job in pending:
                         failure = failed_jobs.get(job.job_id)
                         if failure is None:
                             continue
-    
+
                         status_code = failure.get("status_code")
                         if status_code and status_code not in RETRYABLE_STATUS_CODES:
                             logger.error(
@@ -69,15 +68,15 @@ class BaseJobCrawler(ABC):
                                 f"{failure['status_code']}: {failure.get('error')}"
                             )
                             continue
-    
+
                         next_pending.append(job)
-    
+
                     pending = next_pending
                     if pending:
                         logger.info(
                             f"Retrying {len(pending)} job(s) after attempt {attempt}/{MAX_RETRIES}"
                         )
-                    
+
                 except httpx.TimeoutException as e:
                     logger.error(
                         f"Batch POST timed out on attempt {attempt}/{MAX_RETRIES} "

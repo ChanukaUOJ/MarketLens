@@ -1,12 +1,11 @@
 import re
-from datetime import datetime, timezone
 
 from parsers.base_parser import BaseJobParser
 from models.raw_job import RawJobInput
 
+
 class IkmanParser(BaseJobParser):
-    
-    #This list includes the values that we need to remove in _clean_noise method
+    # This list includes the values that we need to remove in _clean_noise method
     __NOISE_MARKERS = [
         "Show more",
         "Call employer",
@@ -27,31 +26,33 @@ class IkmanParser(BaseJobParser):
         "© 20",
     ]
 
-    #This function removes unneccesary characters from the markdown
+    # This function removes unneccesary characters from the markdown
     def _clean_markdown_links(self, text: str) -> str:
-        text = re.sub(r'\[([^\]]*)\]\([^\)]+\)', r'\1', text)
-        text = re.sub(r'\]\([^\)]+\)', '', text)
+        text = re.sub(r"\[([^\]]*)\]\([^\)]+\)", r"\1", text)
+        text = re.sub(r"\]\([^\)]+\)", "", text)
         return text.strip()
 
-    #This function cuts off noise in footer and description
+    # This function cuts off noise in footer and description
     def _clean_noise(self, text: str) -> str:
         for marker in self.__NOISE_MARKERS:
             idx = text.find(marker)
             if idx != -1:
                 text = text[:idx]
-        text = re.sub(r'\n+', ' ', text)
-        text = re.sub(r'\s{2,}', ' ', text)
+        text = re.sub(r"\n+", " ", text)
+        text = re.sub(r"\s{2,}", " ", text)
         return text.strip()
 
-    #This function extracts employer and job role from the given markdown and label
+    # This function extracts employer and job role from the given markdown and label
     def _extract_label(self, markdown: str, label: str) -> str:
         match = re.search(rf"{label}\s*[:\-]\s*([^\n]+)", markdown, re.IGNORECASE)
         return match.group(1).strip() if match else ""
 
-    #This function extracts the location 
+    # This function extracts the location
     def _extract_location_from_posted_line(self, markdown: str) -> str:
         """Extract district (second span) from 'Posted on ... City, District' line."""
-        match = re.search(r"Posted on [^,]+,\s*([^,\n]+),\s*([^,\n]+)", markdown, re.IGNORECASE)
+        match = re.search(
+            r"Posted on [^,]+,\s*([^,\n]+),\s*([^,\n]+)", markdown, re.IGNORECASE
+        )
         if match:
             # group(2) is the second span — the parent district
             location = match.group(2).strip().rstrip(".,")
@@ -59,7 +60,7 @@ class IkmanParser(BaseJobParser):
             return location
         return ""
 
-    #This function extracts the description from the markdown
+    # This function extracts the description from the markdown
     def _extract_description(self, markdown: str) -> str:
         """Grab job body content — saved to key_responsibilities."""
         patterns = [
@@ -74,18 +75,21 @@ class IkmanParser(BaseJobParser):
 
         meta_end = re.search(
             r"(Application deadline|Required work experience)[^\n]*\n",
-            markdown, re.IGNORECASE
+            markdown,
+            re.IGNORECASE,
         )
         if meta_end:
-            return markdown[meta_end.end():].strip()
+            return markdown[meta_end.end() :].strip()
 
         return ""
 
-    #This function returns the employer, job role, location and description of the job
-    def parse_rule_based_fields(self, markdown: str, crawler_run_id: int) -> RawJobInput:
+    # This function returns the employer, job role, location and description of the job
+    def parse_rule_based_fields(
+        self, markdown: str, crawler_run_id: int
+    ) -> RawJobInput:
 
-        employer   = self._extract_label(markdown, "Employer")
-        job_role   = self._extract_label(markdown, "Role")
+        employer = self._extract_label(markdown, "Employer")
+        job_role = self._extract_label(markdown, "Role")
 
         job_role = self._clean_markdown_links(job_role)
 

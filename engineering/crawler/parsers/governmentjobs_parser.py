@@ -1,8 +1,8 @@
 from parsers.base_parser import BaseJobParser
 from models.raw_job import RawJobInput
 
-class GovernmentJobsParser(BaseJobParser):
 
+class GovernmentJobsParser(BaseJobParser):
     def parse_rule_based_fields(self, data: dict, crawler_run_id: int) -> RawJobInput:
         return RawJobInput(
             employer=data.get("employer", ""),
