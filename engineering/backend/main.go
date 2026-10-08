@@ -1,23 +1,24 @@
 package main
 
 import (
+	"marketlens-go-backend/auth"
 	"marketlens-go-backend/config"
 	"marketlens-go-backend/controllers"
-	"marketlens-go-backend/repositories"
 	"marketlens-go-backend/crawler"
-	"marketlens-go-backend/auth"
 	mcpserver "marketlens-go-backend/mcp"
+	"marketlens-go-backend/repositories"
 
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
+func main() {
 
-func main() { 
-	
 	config.ConnectDatabase()
+	// ConnectDatabase should return the DB and the error. Then check whether the err != nil, then print an error message.
 
 	r := gin.Default()
 
@@ -32,12 +33,12 @@ func main() {
 	r.GET("/readyz", jobCtrl.ReadyzHandler)
 
 	mcpServer := mcpserver.New(jobRepo)
-    go func() {
-        log.Println("MCP server listening on :9090/mcp")
-        if err := mcpserver.StartHTTP(mcpServer, ":9090"); err != nil {
-            log.Fatalf("MCP server failed: %v", err)
-        }
-    }()
+	go func() {
+		log.Println("MCP server listening on :9090/mcp")
+		if err := mcpserver.StartHTTP(mcpServer, ":9090"); err != nil {
+			log.Fatalf("MCP server failed: %v", err)
+		}
+	}()
 
 	v1 := r.Group("/api/v1")
 	{
@@ -78,7 +79,6 @@ func main() {
 			educationLevels.PUT("/:id", auth.AuthRequired(), auth.RequireScope("education-levels:update"), jobCtrl.UpdateEducationLevelHandler)
 			educationLevels.DELETE("/:id", auth.AuthRequired(), auth.RequireScope("education-levels:delete"), jobCtrl.DeleteEducationLevelHandler)
 		}
-
 
 		formalities := v1.Group("/formalities")
 		{
