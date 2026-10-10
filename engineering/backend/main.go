@@ -1,25 +1,34 @@
 package main
 
 import (
+	"marketlens-go-backend/auth"
 	"marketlens-go-backend/config"
 	"marketlens-go-backend/controllers"
-	"marketlens-go-backend/repositories"
 	"marketlens-go-backend/crawler"
-	"marketlens-go-backend/auth"
 	mcpserver "marketlens-go-backend/mcp"
+	"marketlens-go-backend/repositories"
 
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
+func main() {
 
-func main() { 
-	
 	config.ConnectDatabase()
+	// catch the database and the error here to throw the exceptions
 
+	// gin.Default() is the gin.DebugMode where it logs the internal route patterns.
+	// using gin.Default() is a security risk. Better we get an environment variable and set the mode here. (ex: APP_MODE == "production")
+	// recommended way for stg & prod is gin.setMode(gin.ReleaseMode)
 	r := gin.Default()
+
+	// r.Use(gin.Recovery()) Built in recovery middleware catches any panic that happens while the service hanlding a request, writes a 500 response and keep the server running.
+	// if you want to do some other custom handling you can use r.Use(gin.CustomRecovery())
+	// ex: if you want to save the logs to dbs.
+	// refer: https://gin-gonic.com/en/docs/middleware/custom-recovery/
 
 	jobRepo := repositories.NewJobRepository(config.DB)
 	llmClient := crawler.NewDeepSeekClient(http.DefaultClient)
@@ -32,12 +41,12 @@ func main() {
 	r.GET("/readyz", jobCtrl.ReadyzHandler)
 
 	mcpServer := mcpserver.New(jobRepo)
-    go func() {
-        log.Println("MCP server listening on :9090/mcp")
-        if err := mcpserver.StartHTTP(mcpServer, ":9090"); err != nil {
-            log.Fatalf("MCP server failed: %v", err)
-        }
-    }()
+	go func() {
+		log.Println("MCP server listening on :9090/mcp")
+		if err := mcpserver.StartHTTP(mcpServer, ":9090"); err != nil {
+			log.Fatalf("MCP server failed: %v", err)
+		}
+	}()
 
 	v1 := r.Group("/api/v1")
 	{
@@ -78,7 +87,6 @@ func main() {
 			educationLevels.PUT("/:id", auth.AuthRequired(), auth.RequireScope("education-levels:update"), jobCtrl.UpdateEducationLevelHandler)
 			educationLevels.DELETE("/:id", auth.AuthRequired(), auth.RequireScope("education-levels:delete"), jobCtrl.DeleteEducationLevelHandler)
 		}
-
 
 		formalities := v1.Group("/formalities")
 		{
