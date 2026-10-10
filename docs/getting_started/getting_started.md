@@ -25,4 +25,6 @@ For more details :- [ThunderID Documentation](https://thunderid.dev/docs/)
 
 ### MCP Setup
 
+The MCP server runs as its own service (`engineering/mcp`, container `mcp_server`), separate from the backend. It has no database access: every tool calls the backend's `/api/v1` REST endpoints, configured with `BACKEND_API_URL` in `engineering/mcp/.env` (see [.env.example](../../engineering/mcp/.env.example)).
+
 Once all services are running, access the MCP at "http://localhost:9090/mcp". MCP server is also connected with ThunderID and This server is using DCR (Dynamic Client Registration) method. Refer documentation to [setup MCP server with ThunderID](https://thunderid.dev/docs/getting-started/connect-your-mcp/python/).

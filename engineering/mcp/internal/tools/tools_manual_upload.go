@@ -1,4 +1,4 @@
-package mcpserver
+package tools
 
 import (
 	"bytes"
@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
+	"slices"
+	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+
+	"marketlens-mcp/internal/auth"
 )
 
 type newspaperJob struct {
@@ -25,7 +28,9 @@ type submitNewspaperVacanciesInput struct {
 	UserConfirmed bool           `json:"user_confirmed" jsonschema:"set to true ONLY after you have shown the extracted jobs to the user and they explicitly approved them. Never set this on your own."`
 }
 
-func registerManualUploadTools(server *mcp.Server) {
+func registerManualUploadTools(server *mcp.Server, crawlerURL string) {
+	client := &http.Client{Timeout: 5 * time.Minute}
+
 	mcp.AddTool(server, &mcp.Tool{
 		Name: "submit_newspaper_vacancies",
 		Description: "Submit job vacancies extracted from a newspaper image for deduplication, " +
@@ -47,26 +52,13 @@ func registerManualUploadTools(server *mcp.Server) {
 					"get explicit approval, then call this tool again with user_confirmed=true")
 		}
 
-		scopes, _ := ctx.Value(scopesKey).([]string)
-		hasScope := false
-		for _, s := range scopes {
-			if s == "submit-newspaper-vacancies" {
-				hasScope = true
-				break
-			}
-		}
-		if !hasScope {
-			return nil, nil, fmt.Errorf("missing required scope: submit-newspaper-vacancies")
+		if !slices.Contains(auth.ScopesFromContext(ctx), SubmitVacanciesScope) {
+			return nil, nil, fmt.Errorf("missing required scope: %s", SubmitVacanciesScope)
 		}
 
 		body, err := json.Marshal(in.Jobs)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to encode jobs: %w", err)
-		}
-
-		crawlerURL := os.Getenv("CRAWLER_API_URL")
-		if crawlerURL == "" {
-			crawlerURL = "http://crawler:8000"
 		}
 
 		req, err := http.NewRequestWithContext(ctx, http.MethodPost, crawlerURL+"/manual-upload-jobs", bytes.NewReader(body))
@@ -75,7 +67,7 @@ func registerManualUploadTools(server *mcp.Server) {
 		}
 		req.Header.Set("Content-Type", "application/json")
 
-		resp, err := http.DefaultClient.Do(req)
+		resp, err := client.Do(req)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to reach crawler service: %w", err)
 		}

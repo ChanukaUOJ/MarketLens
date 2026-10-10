@@ -1,0 +1,26 @@
+image:
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+config:
+  thunderBaseUrl: "http://marketlens-thunder:8090"
+  thunderInsecureTls: "false"    # real certs expected in prod
+  # Set to the public MCP hostname for this environment. Left empty on purpose:
+  # the service refuses to start until these are configured.
+  mcpPublicBaseUrl: ""
+  mcpResourceId: ""
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi

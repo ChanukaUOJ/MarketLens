@@ -1,0 +1,16 @@
+image:
+  tag: "0.1.0"
+  pullPolicy: Never       # local image loaded via minikube — no registry pull
+
+replicaCount: 1
+
+config:
+  thunderInsecureTls: "true"
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 250m
+    memory: 128Mi

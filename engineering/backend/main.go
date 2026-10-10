@@ -6,10 +6,8 @@ import (
 	"marketlens-go-backend/repositories"
 	"marketlens-go-backend/crawler"
 	"marketlens-go-backend/auth"
-	mcpserver "marketlens-go-backend/mcp"
 
 	"github.com/gin-gonic/gin"
-	"log"
 	"net/http"
 	"time"
 )
@@ -31,16 +29,12 @@ func main() {
 	r.GET("/healthz", jobCtrl.HealthzHandler)
 	r.GET("/readyz", jobCtrl.ReadyzHandler)
 
-	mcpServer := mcpserver.New(jobRepo)
-    go func() {
-        log.Println("MCP server listening on :9090/mcp")
-        if err := mcpserver.StartHTTP(mcpServer, ":9090"); err != nil {
-            log.Fatalf("MCP server failed: %v", err)
-        }
-    }()
-
 	v1 := r.Group("/api/v1")
 	{
+		// Reference data endpoints
+		v1.GET("/provinces", jobCtrl.GetAllGeoDataHandler)
+		v1.GET("/job-types", jobCtrl.GetAllJobTypesHandler)
+
 		// Dashboard endpoints
 		v1.GET("/vacancy-trend", jobCtrl.GetVacancyTrendHandler)
 		v1.GET("/vacancy-total", jobCtrl.GetTotalVacancyCountHandler)

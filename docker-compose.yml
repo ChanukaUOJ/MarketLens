@@ -31,12 +31,26 @@ services:
     container_name: go_backend
     ports:
       - "8080:8080"
-      - "9090:9090"
     env_file:
       - ./engineering/backend/.env
     depends_on:
       database:
         condition: service_healthy
+    networks:
+      - app-network
+
+  # MCP SERVICE
+  mcp:
+    build:
+      context: ./engineering/mcp
+      dockerfile: Dockerfile.mcp
+    container_name: mcp_server
+    ports:
+      - "9090:9090"
+    env_file:
+      - ./engineering/mcp/.env
+    depends_on:
+      - backend
     networks:
       - app-network
 
