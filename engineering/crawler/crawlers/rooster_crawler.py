@@ -4,12 +4,12 @@ import logging
 import math
 from typing import List
 from pydantic import ValidationError
-from utils.thunder_id_client import ThunderAuth
+from utils import ThunderAuth
 from config import BATCH_SIZE
 
-from crawlers.base_crawler import BaseJobCrawler
-from parsers.rooster_parser import RoosterParser
-from models.raw_job import RawJobInput
+from .base_crawler import BaseJobCrawler
+from parsers import RoosterParser
+from models import RawJobInput
 
 logger = logging.getLogger(__name__)
 

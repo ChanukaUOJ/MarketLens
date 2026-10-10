@@ -5,10 +5,10 @@ import logging
 from typing import List
 from bs4 import BeautifulSoup
 from pydantic import ValidationError
-from crawlers.base_crawler import BaseJobCrawler
-from utils.thunder_id_client import ThunderAuth
-from parsers.xpressjobs_parser import XpressJobsParser
-from models.raw_job import RawJobInput
+from .base_crawler import BaseJobCrawler
+from utils import ThunderAuth
+from parsers import XpressJobsParser
+from models import RawJobInput
 from config import BATCH_SIZE
 
 logger = logging.getLogger(__name__)

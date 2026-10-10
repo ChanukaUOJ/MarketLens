@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from utils.thunder_id_client import (
+from utils import (
     DEFAULT_TOKEN_TTL_SECONDS,
     TOKEN_REFRESH_BUFFER_SECONDS,
     ThunderAuth,

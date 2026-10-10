@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from models.raw_job import RawJobInput
+from models import RawJobInput
 
 
 class BaseJobParser(ABC):

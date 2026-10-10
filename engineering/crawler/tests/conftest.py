@@ -2,8 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from crawlers.base_crawler import BaseJobCrawler
-from utils.thunder_id_client import ThunderIDClient
+from utils import ThunderIDClient
+from crawlers import BaseJobCrawler
 
 
 class _ConcreteCrawler(BaseJobCrawler):

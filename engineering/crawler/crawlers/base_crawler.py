@@ -5,8 +5,8 @@ from typing import List
 import httpx
 
 from config import BACKEND_BASE_URL
-from models.raw_job import RawJobInput
-from utils.thunder_id_client import ThunderAuth, ThunderTokenError
+from models import RawJobInput
+from utils import ThunderAuth, ThunderTokenError
 
 logger = logging.getLogger(__name__)
 

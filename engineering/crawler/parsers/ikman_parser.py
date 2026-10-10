@@ -1,7 +1,7 @@
 import re
 
-from parsers.base_parser import BaseJobParser
-from models.raw_job import RawJobInput
+from .base_parser import BaseJobParser
+from models import RawJobInput
 
 
 class IkmanParser(BaseJobParser):

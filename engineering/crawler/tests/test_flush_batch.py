@@ -5,8 +5,8 @@ import httpx
 import pytest
 
 from crawlers.base_crawler import MAX_RETRIES, RETRYABLE_STATUS_CODES
-from models.raw_job import RawJobInput
-from utils.thunder_id_client import ThunderTokenError
+from models import RawJobInput
+from utils import ThunderTokenError
 
 
 def make_job(job_id: str = "job-1", crawler_run_id: int = 1) -> RawJobInput:

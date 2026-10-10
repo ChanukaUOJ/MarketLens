@@ -7,12 +7,12 @@ from typing import List
 from crawl4ai import AsyncWebCrawler
 from bs4 import BeautifulSoup
 from PIL import Image
-from crawlers.base_crawler import BaseJobCrawler
-from utils.thunder_id_client import ThunderAuth
-from parsers.governmentjobs_parser import GovernmentJobsParser
+from .base_crawler import BaseJobCrawler
+from utils import ThunderAuth
+from parsers import GovernmentJobsParser
 from config import BATCH_SIZE
 from pydantic import ValidationError
-from models.raw_job import RawJobInput
+from models import RawJobInput
 
 # pytesseract path setup in docker container
 pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"

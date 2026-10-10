@@ -6,13 +6,15 @@ from typing import Dict, List, Optional, Type
 
 from config import BACKEND_BASE_URL
 
-from crawlers.base_crawler import BaseJobCrawler
-from crawlers.ikman_crawler import IkmanCrawler
-from crawlers.xpressjobs_crawler import XpressJobsCrawler
-from crawlers.topjobs_crawler import TopJobsCrawler
-from crawlers.rooster_crawler import RoosterCrawler
-from crawlers.governmentjobs_crawler import GovernmentJobsCrawler
-from utils.thunder_id_client import ThunderAuth, ThunderIDClient
+from crawlers import (
+    BaseJobCrawler,
+    IkmanCrawler,
+    XpressJobsCrawler,
+    TopJobsCrawler,
+    RoosterCrawler,
+    GovernmentJobsCrawler,
+)
+from .thunder_id_client import ThunderAuth, ThunderIDClient
 
 logger = logging.getLogger(__name__)
 

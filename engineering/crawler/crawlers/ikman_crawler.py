@@ -4,11 +4,11 @@ import re
 import math
 from typing import List
 
-from crawlers.base_crawler import BaseJobCrawler
-from parsers.ikman_parser import IkmanParser
-from utils.thunder_id_client import ThunderAuth
+from .base_crawler import BaseJobCrawler
+from parsers import IkmanParser
+from utils import ThunderAuth
 from pydantic import ValidationError
-from models.raw_job import RawJobInput
+from models import RawJobInput
 from config import BATCH_SIZE
 
 from crawl4ai import (
