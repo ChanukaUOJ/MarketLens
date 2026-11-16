@@ -10,3 +10,5 @@ node_modules
 .idea
 .DS_Store
 npm-debug.log*
+# Choreo runtime secrets (mounted at runtime, never baked into the image)
+config.json
