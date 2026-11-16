@@ -1,0 +1,38 @@
+FROM golang:1.26-alpine AS builder
+
+WORKDIR /app
+
+COPY go.mod go.sum* ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /app/bin/api ./cmd/api
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /app/bin/mcp ./cmd/mcp
+
+FROM alpine:3.19 AS base
+
+# Choreo requires the container to run as a non-root user with a UID
+# between 10000 and 20000, set as a number in the USER instruction.
+RUN apk add --no-cache ca-certificates \
+    && addgroup -g 10014 -S choreo \
+    && adduser -u 10014 -S choreouser -G choreo
+
+WORKDIR /app
+
+# Two final images from here: api and mcp are independently deployable
+# processes (see cmd/api, cmd/mcp), each with only its own binary.
+# Choreo builds the LAST stage, so api must stay at the end of this file.
+# To build mcp locally: docker build -f Dockerfile.choreo --target mcp .
+
+FROM base AS mcp
+COPY --from=builder --chown=10014:10014 /app/bin/mcp .
+USER 10014
+EXPOSE 9090
+CMD ["./mcp"]
+
+FROM base AS api
+COPY --from=builder --chown=10014:10014 /app/bin/api .
+USER 10014
+EXPOSE 8080
+CMD ["./api"]
