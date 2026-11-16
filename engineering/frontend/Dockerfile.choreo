@@ -27,13 +27,6 @@ COPY --from=dependencies /app/node_modules ./node_modules
 # Copy application source code
 COPY . .
 
-## Create a new user with UID 10014 and set up directories
-RUN groupadd -g 10014 choreo && \
-    useradd -u 10014 -g choreo -s /bin/bash -m choreouser && \
-    mkdir -p /home/choreouser/.cache/go-build && \
-    chown -R choreouser:choreo /home/choreouser && \
-    chmod -R 755 /home/choreouser
-
 # To speed up rebuilds, the Next.js build cache can be kept across builds by
 # adding `--mount=type=cache,target=/app/.next/cache` to the RUN below. That
 # also keeps .next/cache/fetch-cache out of the final image, so cached fetch
@@ -51,11 +44,14 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-COPY --from=builder --chown=node:node /app/.next/standalone ./
-COPY --from=builder --chown=node:node /app/.next/static ./.next/static
-COPY --from=builder --chown=node:node /app/public ./public
+# Choreo requires a non-root user with a UID between 10000 and 20000.
+# Alpine uses BusyBox addgroup/adduser (no groupadd/useradd).
+RUN addgroup -g 10014 choreo && \
+    adduser -D -u 10014 -G choreo -h /home/choreouser -s /bin/sh choreouser
 
-USER node
+COPY --from=builder --chown=10014:10014 /app/.next/standalone ./
+COPY --from=builder --chown=10014:10014 /app/.next/static ./.next/static
+COPY --from=builder --chown=10014:10014 /app/public ./public
 
 USER 10014
 
