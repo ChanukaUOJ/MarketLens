@@ -36,24 +36,33 @@ done
 # ThunderID requires a DNS subjectAltName on its signing certificates.
 host="$(printf '%s' "$settings" | jq -r '.THUNDER_PUBLIC_URL' | sed -E 's#^[a-z]+://##; s#[:/].*$##')"
 san="subjectAltName=DNS:${host}"
-subj="/O=ThunderID/OU=ThunderID/CN=${host}"
+# The CN is limited to 64 characters and Choreo host names are often longer,
+# so the host only goes in the subjectAltName (no length limit).
+subj="/O=ThunderID/OU=ThunderID/CN=ThunderID"
 
 mkdir -p "$KEY_DIR"
 chmod 700 "$KEY_DIR"
 umask 077
 
-if [ ! -f "$KEY_DIR/signing.key" ]; then
+# A cert/key pair is (re)generated if either half is missing, e.g. after a
+# failed earlier run.
+if [ ! -f "$KEY_DIR/signing.key" ] || [ ! -f "$KEY_DIR/signing.cert" ]; then
     echo "Generating RSA signing key for $host"
+    rm -f "$KEY_DIR/signing.key" "$KEY_DIR/signing.cert"
     openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
         -keyout "$KEY_DIR/signing.key" -out "$KEY_DIR/signing.cert" \
-        -subj "$subj" -addext "$san" 2>/dev/null
+        -subj "$subj" -addext "$san" 2>"$KEY_DIR/openssl.log" ||
+        { cat "$KEY_DIR/openssl.log" >&2; rm -f "$KEY_DIR/signing.key" "$KEY_DIR/signing.cert"; exit 1; }
 fi
-if [ ! -f "$KEY_DIR/ecdsa-signing.key" ]; then
+if [ ! -f "$KEY_DIR/ecdsa-signing.key" ] || [ ! -f "$KEY_DIR/ecdsa-signing.cert" ]; then
     echo "Generating ECDSA signing key for $host"
-    openssl ecparam -name prime256v1 -genkey -noout -out "$KEY_DIR/ecdsa-signing.key"
-    openssl req -new -x509 -nodes -days 3650 -key "$KEY_DIR/ecdsa-signing.key" \
-        -out "$KEY_DIR/ecdsa-signing.cert" -subj "$subj" -addext "$san" 2>/dev/null
+    rm -f "$KEY_DIR/ecdsa-signing.key" "$KEY_DIR/ecdsa-signing.cert"
+    { openssl ecparam -name prime256v1 -genkey -noout -out "$KEY_DIR/ecdsa-signing.key" &&
+      openssl req -new -x509 -nodes -days 3650 -key "$KEY_DIR/ecdsa-signing.key" \
+        -out "$KEY_DIR/ecdsa-signing.cert" -subj "$subj" -addext "$san"; } 2>"$KEY_DIR/openssl.log" ||
+        { cat "$KEY_DIR/openssl.log" >&2; rm -f "$KEY_DIR/ecdsa-signing.key" "$KEY_DIR/ecdsa-signing.cert"; exit 1; }
 fi
+rm -f "$KEY_DIR/openssl.log"
 [ -f "$KEY_DIR/crypto.key" ] || printf '%s' "$(openssl rand -hex 32)" > "$KEY_DIR/crypto.key"
 [ -f "$KEY_DIR/direct_auth_secret" ] || printf '%s' "$(openssl rand -hex 32)" > "$KEY_DIR/direct_auth_secret"
 

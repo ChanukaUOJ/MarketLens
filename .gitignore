@@ -27,6 +27,11 @@ go.work.sum
 # env file
 .env
 
+# Thunder Choreo secrets (only config.example.json is committed)
+engineering/thunder/thunder.env
+engineering/thunder/config.json
+engineering/thunder/choreo-keys/
+
 # Editor/IDE
 # .idea/
 # .vscode/
