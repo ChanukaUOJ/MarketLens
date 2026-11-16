@@ -1,0 +1,102 @@
+# ThunderID configuration for the Choreo deployment.
+# The local docker-compose setup uses deployment.yaml instead.
+#
+# Templated values (dot-prefixed names in double braces) are filled from
+# environment variables. Set them in Choreo under the component's
+# Configs & Secrets (mark passwords as secrets). Don't write that placeholder
+# syntax in comments: ThunderID substitutes it there too.
+
+server:
+  hostname: "0.0.0.0"
+  port: 8090
+  # Choreo terminates HTTPS at its gateway and forwards plain HTTP to the
+  # container, so ThunderID must not serve TLS itself.
+  http_only: true
+  # The public HTTPS URL Choreo gives this component, e.g. https://xxxx.choreoapps.dev
+  public_url: "{{.THUNDER_PUBLIC_URL}}"
+  security:
+    # Mounted in Choreo as a secret file at /opt/thunderid/config/secrets/direct_auth_secret
+    direct_auth_secret: "file://config/secrets/direct_auth_secret"
+
+# SQLite files inside the container would be wiped on every redeploy or
+# restart, so all four databases live in PostgreSQL. Create the databases
+# and load the matching dbscripts/<db>/postgres.sql into each before the
+# first deploy.
+database:
+  config:
+    type: "postgres"
+    postgres:
+      hostname: "{{.DB_HOST}}"
+      port: 5432
+      name: "thunderid_config"
+      username: "{{.DB_USERNAME}}"
+      password: "{{.DB_PASSWORD}}"
+      sslmode: "require"
+
+  runtime_transient:
+    type: "postgres"
+    postgres:
+      hostname: "{{.DB_HOST}}"
+      port: 5432
+      name: "thunderid_runtime_transient"
+      username: "{{.DB_USERNAME}}"
+      password: "{{.DB_PASSWORD}}"
+      sslmode: "require"
+
+  entity:
+    type: "postgres"
+    postgres:
+      hostname: "{{.DB_HOST}}"
+      port: 5432
+      name: "thunderid_entity"
+      username: "{{.DB_USERNAME}}"
+      password: "{{.DB_PASSWORD}}"
+      sslmode: "require"
+
+  runtime_persistent:
+    type: "postgres"
+    postgres:
+      hostname: "{{.DB_HOST}}"
+      port: 5432
+      name: "thunderid_runtime_persistent"
+      username: "{{.DB_USERNAME}}"
+      password: "{{.DB_PASSWORD}}"
+      sslmode: "require"
+
+# These keys must stay the same across restarts, or issued tokens and
+# encrypted data stop working. Generate them once and mount them in Choreo
+# as secret files under /opt/thunderid/config/certs/.
+crypto:
+  encryption:
+    key: "file://config/certs/crypto.key"
+  password_hashing:
+    algorithm: "PBKDF2"
+  keys:
+    - id: "default-key"
+      cert_file: "config/certs/signing.cert"
+      key_file: "config/certs/signing.key"
+    - id: "ecdsa-key"
+      cert_file: "config/certs/ecdsa-signing.cert"
+      key_file: "config/certs/ecdsa-signing.key"
+
+jwt:
+  preferred_key_id: "default-key"
+
+oauth:
+  dcr:
+    enabled: true
+    insecure: true
+
+passkey:
+  allowed_origins:
+    - "{{.THUNDER_PUBLIC_URL}}"
+
+email:
+  smtp:
+    host: "smtp.gmail.com"
+    port: 587
+    username: "noreplytvecdev@gmail.com"
+    password: "{{.SMTP_PASSWORD}}"
+    from_address: "noreplytvecdev@gmail.com"
+    enable_start_tls: true
+    enable_authentication: true
