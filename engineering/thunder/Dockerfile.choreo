@@ -1,8 +1,20 @@
 # Pinned to the same version docker-compose uses.
 FROM ghcr.io/thunder-id/thunderid:1.0.0
 
+USER root
+
+# jq reads the Choreo config file in choreo-entrypoint.sh.
+# config/certs and config/secrets point into /tmp, where the entrypoint writes
+# the key material at startup (/tmp stays writable even if the rest of the
+# filesystem is read-only).
+RUN apk add --no-cache jq && \
+    rm -rf /opt/thunderid/config/certs /opt/thunderid/config/secrets && \
+    ln -s /tmp/thunderid/certs /opt/thunderid/config/certs && \
+    ln -s /tmp/thunderid/secrets /opt/thunderid/config/secrets
+
 # Choreo-specific config (PostgreSQL, plain HTTP behind Choreo's gateway).
 COPY --chown=10001:10001 deployment-choreo.yaml /opt/thunderid/deployment.yaml
+COPY --chown=10001:10001 --chmod=755 choreo-entrypoint.sh /opt/thunderid/choreo-entrypoint.sh
 
 # The base image's "thunderid" user is UID 10001, which is within Choreo's
 # required 10000-20000 range. Choreo needs the UID set as a number.
@@ -10,6 +22,6 @@ USER 10001
 
 EXPOSE 8090
 
-# For the very first deploy only, use ["./start.sh", "--bootstrap-and-serve"]
-# to create the admin user and default resources, then switch back.
-CMD ["./start.sh"]
+# Settings and keys come from the Choreo file mount at /app/configs/config.json.
+# See config.example.json for its format.
+CMD ["./choreo-entrypoint.sh"]

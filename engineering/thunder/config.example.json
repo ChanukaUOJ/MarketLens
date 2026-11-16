@@ -1,0 +1,17 @@
+{
+  "THUNDER_PUBLIC_URL": "https://your-thunder.choreoapps.dev",
+  "DB_HOST": "your-postgres-host",
+  "DB_USERNAME": "thunderid",
+  "DB_PASSWORD": "change-me",
+  "SMTP_PASSWORD": "gmail-app-password",
+  "ADMIN_USERNAME": "admin",
+  "ADMIN_PASSWORD": "change-me",
+  "THUNDER_BOOTSTRAP": "false",
+
+  "CRYPTO_KEY": "64 hex characters, e.g. from: openssl rand -hex 32",
+  "DIRECT_AUTH_SECRET": "64 hex characters, e.g. from: openssl rand -hex 32",
+  "SIGNING_CERT": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+  "SIGNING_KEY": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----",
+  "ECDSA_SIGNING_CERT": "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----",
+  "ECDSA_SIGNING_KEY": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+}
