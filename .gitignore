@@ -27,6 +27,9 @@ go.work.sum
 # env file
 .env
 
+# Frontend Choreo runtime config (only config.example.json is committed)
+engineering/frontend/config.json
+
 # Editor/IDE
 # .idea/
 # .vscode/

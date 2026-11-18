@@ -1,0 +1,74 @@
+# ============================================
+# Stage 1: Dependencies Installation Stage
+# ============================================
+FROM node:20-alpine AS dependencies
+
+WORKDIR /app
+
+# Copy package-related files first to leverage Docker's layer caching: the
+# install layer below is rebuilt only when these files change.
+COPY package.json package-lock.json ./
+
+# Install dependencies from the lockfile for reproducible builds. The npm
+# download cache is kept across builds with a BuildKit cache mount.
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --no-audit --no-fund
+
+# ============================================
+# Stage 2: Build Next.js application in standalone mode
+# ============================================
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy project dependencies from the dependencies stage
+COPY --from=dependencies /app/node_modules ./node_modules
+
+# Copy application source code
+COPY . .
+
+# NEXT_PUBLIC_* values are compiled into the JavaScript by `npm run build`.
+# To keep the real values out of the repo and the image, the build compiles in
+# placeholders, and start.mjs replaces them at startup with the values from
+# the Choreo file mount (/app/configs/config.json). See config.example.json.
+ENV NEXT_PUBLIC_API_BASE_URL="/api/v1" \
+    NEXT_PUBLIC_THUNDERID_BASE_URL="__NEXT_PUBLIC_THUNDERID_BASE_URL__" \
+    NEXT_PUBLIC_THUNDERID_APPLICATION_ID="__NEXT_PUBLIC_THUNDERID_APPLICATION_ID__" \
+    NEXT_PUBLIC_THUNDERID_CLIENT_ID="__NEXT_PUBLIC_THUNDERID_CLIENT_ID__" \
+    NEXT_PUBLIC_THUNDERID_AFTER_SIGN_IN_URL="__NEXT_PUBLIC_THUNDERID_AFTER_SIGN_IN_URL__"
+
+# To speed up rebuilds, the Next.js build cache can be kept across builds by
+# adding `--mount=type=cache,target=/app/.next/cache` to the RUN below. That
+# also keeps .next/cache/fetch-cache out of the final image, so cached fetch
+# responses from the build won't be available at runtime.
+RUN npm run build
+
+# ============================================
+# Stage 3: Run Next.js application
+# ============================================
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Choreo requires a non-root user with a UID between 10000 and 20000,
+# set as a number in the USER instruction. Alpine uses BusyBox
+# addgroup/adduser (no groupadd/useradd).
+RUN addgroup -g 10014 choreo && \
+    adduser -D -u 10014 -G choreo -h /home/choreouser -s /bin/sh choreouser
+
+COPY --from=builder --chown=10014:10014 /app/.next/standalone ./
+COPY --from=builder --chown=10014:10014 /app/.next/static ./.next/static
+COPY --from=builder --chown=10014:10014 /app/public ./public
+COPY --from=builder --chown=10014:10014 /app/start.mjs ./start.mjs
+
+USER 10014
+
+EXPOSE 3000
+
+# Loads settings from the Choreo file mount at /app/configs/config.json,
+# fills in the NEXT_PUBLIC_* placeholders, then starts server.js.
+CMD ["node", "start.mjs"]

@@ -1,0 +1,10 @@
+{
+  "NEXT_PUBLIC_THUNDERID_BASE_URL": "https://<thunder-url-from-choreo>",
+  "NEXT_PUBLIC_THUNDERID_APPLICATION_ID": "<application id from the Choreo Thunder console>",
+  "NEXT_PUBLIC_THUNDERID_CLIENT_ID": "<client id from the Choreo Thunder console>",
+  "NEXT_PUBLIC_THUNDERID_AFTER_SIGN_IN_URL": "https://<frontend-url-from-choreo>/auth",
+
+  "BACKEND_API_URL": "https://<backend-service-url-from-choreo>",
+  "THUNDERID_SECRET": "random string, e.g. from: openssl rand -base64 32",
+  "THUNDERID_CLIENT_SECRET": "client secret of the app in the Choreo Thunder console"
+}
