@@ -31,7 +31,6 @@ go.work.sum
 engineering/thunder/thunder.env
 engineering/thunder/config.json
 engineering/thunder/choreo-keys/
-engineering/frontend/config.json
 
 # Editor/IDE
 # .idea/
