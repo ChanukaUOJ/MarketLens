@@ -15,6 +15,9 @@ RUN apk add --no-cache jq && \
 # Choreo-specific config (PostgreSQL, plain HTTP behind Choreo's gateway).
 COPY --chown=10001:10001 deployment-choreo.yaml /opt/thunderid/deployment.yaml
 COPY --chown=10001:10001 --chmod=755 choreo-entrypoint.sh /opt/thunderid/choreo-entrypoint.sh
+# Content Security Policy: the image's default, plus GitHub in img-src so
+# login-flow icons hosted on GitHub can load.
+COPY --chown=10001:10001 csp.yaml /opt/thunderid/config/resources/server_configs/csp.yaml
 
 # The base image's "thunderid" user is UID 10001, which is within Choreo's
 # required 10000-20000 range. Choreo needs the UID set as a number.
