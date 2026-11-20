@@ -45,6 +45,21 @@ const BUILD_PLACEHOLDERS = [
   "NEXT_PUBLIC_THUNDERID_AFTER_SIGN_OUT_URL",
 ];
 
+// List placeholders compiled in by Dockerfile.choreo. The build stores each as
+// a single JSON string in a list (["__KEY__"]); the comma-separated value from
+// the config replaces it with one entry per item.
+//   SERVER_ACTIONS_ALLOWED_ORIGINS: the public host(s) of this frontend, which
+//   next.config.ts passes to serverActions.allowedOrigins (sign-in needs it).
+const LIST_PLACEHOLDERS = ["SERVER_ACTIONS_ALLOWED_ORIGINS"];
+
+// Same normalisation as next.config.ts: keep only the host of each entry.
+function hostList(value) {
+  return value
+    .split(",")
+    .map((entry) => entry.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, ""))
+    .filter(Boolean);
+}
+
 function fail(message) {
   console.error(`Error: ${message}`);
   process.exit(1);
@@ -88,21 +103,41 @@ function isWritable(dir) {
   }
 }
 
+// The build output plus server.js, which holds its own copy of next.config.
+function* buildFiles(dir) {
+  yield* walk(join(dir, ".next"));
+  yield join(dir, "server.js");
+}
+
 // Returns the directory to start the server from.
 function fillPlaceholders() {
-  const replacements = BUILD_PLACEHOLDERS.map((key) => [`__${key}__`, process.env[key]]);
+  const placeholders = [
+    ...LIST_PLACEHOLDERS.map((key) => `"__${key}__"`),
+    ...BUILD_PLACEHOLDERS.map((key) => `__${key}__`),
+  ];
   const hasPlaceholder = (file) => {
     const text = readFileSync(file, "utf8");
-    return replacements.some(([placeholder]) => text.includes(placeholder));
+    return placeholders.some((placeholder) => text.includes(placeholder));
   };
 
   // Nothing to do if the build has already been filled in (container restart).
-  if (![...walk(join(appDir, ".next"))].some(hasPlaceholder)) return appDir;
+  if (![...buildFiles(appDir)].some(hasPlaceholder)) return appDir;
 
-  const missing = BUILD_PLACEHOLDERS.filter((key) => !process.env[key]);
+  const missing = [...BUILD_PLACEHOLDERS, ...LIST_PLACEHOLDERS].filter(
+    (key) => !process.env[key] || (LIST_PLACEHOLDERS.includes(key) && hostList(process.env[key]).length === 0),
+  );
   if (missing.length > 0) {
     fail(`missing in ${configFile}: ${missing.join(", ")}`);
   }
+
+  // List placeholders first: their quoted form contains the plain one.
+  const replacements = [
+    ...LIST_PLACEHOLDERS.map((key) => [
+      `"__${key}__"`,
+      hostList(process.env[key]).map((host) => JSON.stringify(host)).join(","),
+    ]),
+    ...BUILD_PLACEHOLDERS.map((key) => [`__${key}__`, process.env[key]]),
+  ];
 
   // Fill in place if possible; if the filesystem is read-only, work on a
   // copy of the app in /tmp instead (without the mounted configs folder).
@@ -117,7 +152,7 @@ function fillPlaceholders() {
     targetDir = writableAppDir;
   }
 
-  const pending = [...walk(join(targetDir, ".next"))].filter(hasPlaceholder);
+  const pending = [...buildFiles(targetDir)].filter(hasPlaceholder);
   for (const file of pending) {
     let text = readFileSync(file, "utf8");
     for (const [placeholder, value] of replacements) {
@@ -129,7 +164,7 @@ function fillPlaceholders() {
       fail(`could not write ${file} (${err.code})`);
     }
   }
-  console.log(`Filled in NEXT_PUBLIC_* values in ${pending.length} build files`);
+  console.log(`Filled in config values in ${pending.length} build files`);
   return targetDir;
 }
 
