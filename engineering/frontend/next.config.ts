@@ -11,7 +11,9 @@ const nextConfig: NextConfig = {
     serverActions: {
       // Host only (no https://). Choreo's gateway sets x-forwarded-host to the
       // internal service name, so the public host has to be allowed explicitly.
-      allowedOrigins: ["8af8753d-8243-4d6e-9952-f133a694bd15.e1-us-east-azure.choreoapps.dev"]
+      allowedOrigins: [
+        "8af8753d-8243-4d6e-9952-f133a694bd15.e1-us-east-azure.choreoapps.dev",
+        "https://0da5790a-aeef-444b-999b-26a2324b15fb.e1-us-east-azure.choreoapps.dev"]
     }
   }
 };
